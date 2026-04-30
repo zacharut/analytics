@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CLINIQ Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+}
+
+/* Topbar */
+.topbar {
+    background: #5f7396;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    height: 60px;
+    box-sizing: border-box;
+}
+
+.topbar .logo-section {
+    width: 240px; 
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.topbar .logo-icon {
+    height: 35px;
+    margin-right: 12px;
+}
+
+.topbar-decorator {
+    flex: 1;
+    background: white;
+    height: 35px;
+    border-radius: 8px;
+    margin-left: 20px;
+}
+
+/* Layout */
+.container {
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 240px;
+    background: white;
+    height: calc(100vh - 60px);
+    padding: 15px;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.profile {
+    background: #5f7396;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-initials {
+    background: white;
+    color: #5f7396;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    border: 2px solid #a29bfe;
+}
+
+.menu-title {
+    font-size: 12px;
+    color: #fff;
+    background: #5f7396;
+    padding: 5px 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    width: fit-content;
+}
+
+.menu-item {
+    padding: 10px;
+    margin: 2px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #5f7396;
+    font-weight: bold;
+}
+
+.menu-item img {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+}
+
+.menu-item:hover {
+    background: #eef2f7;
+}
+
+.signout {
+    margin-top: 20px;
+    background: #5f7396;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.signout img {
+    width: 20px;
+    margin-right: 10px;
+    filter: brightness(0) invert(1);
+}
+
+.sidebar-footer-logo {
+    margin-top: auto;
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+.sidebar-footer-logo img {
+    width: 80px;
+    opacity: 0.5;
+}
+
+/* Main */
+.main {
+    flex: 1;
+    padding: 20px;
+}
+
+/* Cards */
+.cards {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card {
+    flex: 1;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.card .value {
+    color: #e63946;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.card small {
+    color: #ff7675;
+}
+
+/* Charts */
+.charts {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.chart-box {
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.chart-container {
+    width: 100%;
+    height: 180px;
+}
+
+.bottom-text {
+    margin-top: 15px;
+    text-align: center;
+    color: #444;
+    font-size: 14px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div class="logo-section">
+        <img src="images/clogo.png" class="logo-icon" alt=""> CLINIQ
+    </div>
+    <div class="topbar-decorator"></div>
+</div>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="profile">
+            <div class="profile-initials">MC</div>
+            <div>
+                <strong>Curitana, MC</strong><br>
+                <small>Lab Administrator</small>
+            </div>
+        </div>
+
+        <div class="menu-title">Overview</div>
+        <div class="menu-item">
+            <img src="images/dashboard.png" alt=""> Dashboard
+        </div>
+
+        <div class="menu-title">Management</div>
+        <div class="menu-item"><img src="images/test.png" alt=""> Test Catalog</div>
+        <div class="menu-item"><img src="images/lab.png" style="width:15px;" alt=""> Lab Requests</div>
+        <div class="menu-item"><img src="images/billing.png" alt=""> Billing</div>
+
+        <div class="menu-title">Reports</div>
+        <div class="menu-item"><img src="images/analytics.png" alt=""> Analytics</div>
+
+        <div class="signout">
+            <img src="images/ssignout.png" alt=""> Sign Out
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="cards">
+            <div class="card">
+                <h3>Request (6 mo.)</h3>
+                <div class="value">₱ 1,284</div>
+                <small>April 2026 – Unpaid</small>
+            </div>
+            <div class="card">
+                <h3>Avg. TAT</h3>
+                <div class="value">₱ 1,284</div>
+                <small>April 2026 – Unpaid</small>
+            </div>
+            <div class="card">
+                <h3>Revenue (6 mo.)</h3>
+                <div class="value">₱ 1,284</div>
+                <small>April 2026 – Unpaid</small>
+            </div>
+            <div class="card">
+                <h3>Completion Rate</h3>
+                <div class="value">₱ 1,284</div>
+                <small>April 2026 – Unpaid</small>
+            </div>
+        </div>
+
+        <div class="charts">
+            <!-- Line Chart -->
+            <div class="chart-box">
+                <div class="chart-container">
+                    <canvas id="lineChart"></canvas>
+                </div>
+                <div class="bottom-text">Request (6 mo.)</div>
+            </div>
+
+            <!-- Updated Pie Chart -->
+            <div class="chart-box">
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="bottom-text">Department Analytics</div>
+            </div>
+
+            <!-- Bar Chart -->
+            <div class="chart-box">
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div class="bottom-text">Revenue per month</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Line Chart
+new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+        labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+        datasets: [{
+            data: [12, 20, 45, 40, 35],
+            borderColor: '#54a0ff',
+            backgroundColor: 'transparent',
+            tension: 0.4
+        }]
+    },
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+    }
+});
+
+// FIXED PIE CHART (Matches image_f20196.png)
+new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+        labels: ['Sales', 'Finance', 'Marketing', 'HR'],
+        datasets: [{
+            data: [55, 25, 15, 6],
+            backgroundColor: [
+                '#4935D5', // Dark Blue/Purple (Sales)
+                '#A29BFE', // Light Purple (Finance)
+                '#F8B1A0', // Peach/Salmon (Marketing)
+                '#FFE9A8'  // Yellow (HR)
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded', // Matches the rounded pill markers
+                    padding: 20,
+                    boxWidth: 40,
+                    font: { size: 13 }
+                }
+            }
+        }
+    }
+});
+
+// Bar Chart
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [
+            { label: 'Desktop', data: [4000, 3200, 2200], backgroundColor: '#54a0ff' },
+            { label: 'Mobile', data: [2500, 1700, 1200], backgroundColor: '#a29bfe' }
+        ]
+    },
+    options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } }
+    }
+});
+</script>
+
+</body>
+</html>
