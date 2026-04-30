@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLINIQ - Billing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-green: #81c2a6;
+            --sidebar-bg: #ffffff;
+            --main-bg: #f8f9fa;
+            --text-dark: #4a4a4a;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--primary-green);
+        }
+
+        .header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            width: 220px;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            height: 35px;
+            background: white;
+            border-radius: 20px;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+            background: white;
+        }
+
+        .sidebar {
+            width: 240px;
+            border-right: 1px solid var(--border-color);
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clinic-card {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .avatar-box {
+            background: white;
+            color: var(--primary-green);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .nav-section-title {
+            background: var(--primary-green);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px 0 0 20px;
+            margin-left: -15px;
+            font-size: 14px;
+            width: fit-content;
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            color: #5f7a6f;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .nav-item:hover { background: #f0f9f4; }
+        .nav-item.active { color: #2d6a4f; background: #e8f5ef; }
+
+        .sign-out {
+            margin-top: 20px;
+            background: var(--primary-green);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .sign-out:hover { background: #6aad8e; }
+
+        .sidebar-footer {
+            margin-top: auto;
+            text-align: center;
+            opacity: 0.4;
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            background: #fdfdfd;
+            overflow-y: auto;
+        }
+
+        .billing-header h1 { margin: 0; color: #2d6a4f; }
+        .billing-header p { margin: 5px 0 20px; color: #888; font-size: 14px; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border-radius: 8px;
+            color: #6c757d;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .tab:hover { background: #dce8e0; color: #2d6a4f; }
+        .tab.active { background: #d4edda; color: #155724; }
+
+        /* Tab panels */
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+        }
+
+        .statement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            background: #f87171;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .status-badge.paid { background: #4ade80; color: #166534; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th { text-align: left; color: #888; font-size: 13px; padding-bottom: 10px; }
+        .data-table td { padding: 10px 0; font-weight: 600; color: #444; border-bottom: 1px solid #f3f4f6; }
+        .data-table tr:last-child td { border-bottom: none; }
+
+        .totals-section {
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; }
+
+        .button-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+        .btn:hover { background: #f0f9f4; border-color: var(--primary-green); }
+        .btn-primary { background: #e5e7eb; border: none; }
+        .btn-primary:hover { background: #6aad8e; color: white; }
+        .btn-pay { background: var(--primary-green); color: white; border: none; }
+        .btn-pay:hover { background: #6aad8e; }
+
+        .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .inner-result-card {
+            border: 2px solid var(--primary-green);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .flag-high { color: #ef4444; font-weight: bold; }
+
+        /* Previous statements clickable rows */
+        .statement-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-bottom: 4px;
+        }
+        .statement-row:hover { background: #f0f9f4; }
+        .statement-row .row-right { display: flex; align-items: center; gap: 10px; }
+        .statement-row .small-badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; }
+
+        /* Payment History table */
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th { text-align: left; color: #888; font-size: 13px; padding: 10px 0; border-bottom: 2px solid #eee; }
+        .history-table td { padding: 12px 0; font-size: 14px; border-bottom: 1px solid #f3f4f6; color: #444; }
+        .history-table tr:last-child td { border-bottom: none; }
+
+        /* ── MODAL OVERLAY ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 420px;
+            max-width: 95vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            position: relative;
+            animation: modalIn 0.2s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 18px;
+            background: none; border: none;
+            font-size: 20px; color: #888;
+            cursor: pointer; line-height: 1;
+        }
+        .modal-close:hover { color: #333; }
+
+        .modal h2 { margin: 0 0 5px; color: #2d6a4f; font-size: 20px; }
+        .modal .modal-sub { color: #888; font-size: 13px; margin-bottom: 20px; }
+
+        .modal-amount-box {
+            background: #f0f9f4;
+            border: 2px solid var(--primary-green);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+        .modal-amount-box .label { font-size: 12px; color: #888; margin-bottom: 4px; }
+        .modal-amount-box .amount { font-size: 28px; font-weight: bold; color: #2d6a4f; }
+
+        .payment-methods { margin-bottom: 20px; }
+        .payment-methods .pm-label { font-size: 13px; color: #666; margin-bottom: 10px; font-weight: 600; }
+        .pm-options { display: flex; gap: 10px; }
+        .pm-option {
+            flex: 1; padding: 10px; border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            text-align: center; font-size: 13px; font-weight: 600;
+            cursor: pointer; color: #555; transition: all 0.15s;
+        }
+        .pm-option:hover, .pm-option.selected { border-color: var(--primary-green); background: #f0f9f4; color: #2d6a4f; }
+
+        .form-row { margin-bottom: 14px; }
+        .form-row label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: 600; }
+        .form-row input {
+            width: 100%; padding: 10px 12px; border-radius: 8px;
+            border: 1px solid #ddd; font-size: 14px; font-family: inherit;
+            box-sizing: border-box; outline: none; transition: border 0.15s;
+        }
+        .form-row input:focus { border-color: var(--primary-green); }
+        .form-row-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .btn-confirm-pay {
+            width: 100%; padding: 14px; background: var(--primary-green);
+            color: white; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: bold; cursor: pointer;
+            font-family: inherit; transition: background 0.15s; margin-top: 5px;
+        }
+        .btn-confirm-pay:hover { background: #6aad8e; }
+
+        /* ── SUCCESS STATE ── */
+        .success-state { text-align: center; padding: 10px 0 5px; }
+        .success-icon { font-size: 50px; margin-bottom: 10px; }
+        .success-state h2 { color: #2d6a4f; margin: 0 0 8px; }
+        .success-state p { color: #666; font-size: 14px; margin-bottom: 20px; }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 30px; right: 30px;
+            background: #2d6a4f;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── SIGN OUT MODAL ── */
+        .signout-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: modalIn 0.2s ease;
+        }
+        .signout-modal h3 { margin: 0 0 8px; color: #2d6a4f; }
+        .signout-modal p { color: #888; font-size: 14px; margin-bottom: 20px; }
+        .signout-btns { display: flex; gap: 10px; }
+        .btn-cancel { flex:1; padding:10px; border-radius:8px; border:1px solid #ddd; background:white; cursor:pointer; font-weight:bold; font-family:inherit; }
+        .btn-cancel:hover { background:#f5f5f5; }
+        .btn-signout-confirm { flex:1; padding:10px; border-radius:8px; border:none; background:#f87171; color:white; cursor:pointer; font-weight:bold; font-family:inherit; }
+        .btn-signout-confirm:hover { background:#ef4444; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="logo-area"><img src="images/clogo.png" width="50" alt="">CLINIQ</div>
+        <div class="search-bar"></div>
+    </header>
+
+    <div class="container">
+        <nav class="sidebar">
+            <div class="clinic-card">
+                <div class="avatar-box">SL</div>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;">St. Luke's Clinic</div>
+                    <div style="font-size: 11px; opacity: 0.8;">Clinic User</div>
+                </div>
+            </div>
+
+            <div class="nav-section-title">Overview</div>
+            <a href="#" class="nav-item" onclick="showNavToast('Dashboard')"><img src="images/dashboard.png" width="25" alt="">Dashboard</a>
+            <a href="#" class="nav-item" onclick="showNavToast('Lab Requests')"><img src="images/test.png" width="25" alt="">Lab Requests</a>
+            <a href="#" class="nav-item active"><img src="images/billing.png" width="25" alt="">Billing </a>
+            <a href="#" class="nav-item" onclick="showNavToast('Analytics')"><img src="images/analytics.png" width="25" alt="">Analytics</a>
+
+            <button class="sign-out" onclick="openSignOut()">↩ Sign Out</button>
+
+            <div class="sidebar-footer">CLINIQ</div>
+        </nav>
+
+        <main class="main-content">
+            <div class="billing-header">
+                <h1>Billing</h1>
+                <p>Monthly statements from MetroMed Diagnostics</p>
+            </div>
+
+            <!-- TABS -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('invoice', this)">Current Invoice</button>
+                <button class="tab" onclick="switchTab('history', this)">Payment History</button>
+                <button class="tab" onclick="switchTab('results', this)">Lab Results</button>
+            </div>
+
+            <!-- TAB: CURRENT INVOICE -->
+            <div id="tab-invoice" class="tab-panel active">
+                <div class="dashboard-grid">
+                    <div class="left-col">
+                        <div class="card">
+                            <div class="statement-header">
+                                <div>
+                                    <h3 style="margin: 0;" id="invoice-month">April 2026 Statement</h3>
+                                    <small style="color: #888;">MetroMed Diagnostics</small>
+                                </div>
+                                <div class="status-badge" id="invoice-status">Unpaid</div>
+                            </div>
+
+                            <table class="data-table" id="invoice-table">
+                                <thead>
+                                    <tr>
+                                        <th>TEST</th><th>QTY</th><th>PRICE(EA.)</th><th>TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invoice-tbody">
+                                    <tr><td>CBC</td><td>14</td><td>₱350</td><td>₱4,900</td></tr>
+                                    <tr><td>HbA1c</td><td>7</td><td>₱550</td><td>₱3,850</td></tr>
+                                </tbody>
+                            </table>
+
+                            <div class="totals-section">
+                                <div class="total-row" style="color: #666; font-weight: normal;">
+                                    <span>Subtotal</span><span id="inv-subtotal">₱8,750</span>
+                                </div>
+                                <div class="total-row" style="color: #444;">
+                                    <span>Bulk discount</span><span id="inv-discount">-₱3,350</span>
+                                </div>
+                                <div class="total-row" style="font-size: 18px; margin-top: 10px;">
+                                    <span>Total Due</span><span id="inv-total">₱5,400</span>
+                                </div>
+                            </div>
+
+                            <div class="button-group">
+                                <button class="btn" onclick="downloadInvoicePDF()">📄 PDF Invoice</button>
+                                <button class="btn btn-pay" id="pay-btn" onclick="openPayModal()">Pay Now</button>
+                            </div>
+                        </div>
+
+                        <div class="card" style="margin-top: 20px;">
+                            <h4 style="margin-top: 0; color: #2d6a4f;">Previous Statements</h4>
+                            <div class="statement-row" onclick="loadStatement('January 2026', 15400, [{test:'CBC',qty:32,price:350,total:11200},{test:'Urinalysis',qty:15,price:280,total:4200}], 15400, 0)">
+                                <span>January 2026</span>
+                                <div class="row-right">
+                                    <span style="font-weight: bold;">₱15,400</span>
+                                    <span class="small-badge status-badge paid">Paid</span>
+                                    <span style="color:#aaa; font-size:12px;">›</span>
+                                </div>
+                            </div>
+                            <div class="statement-row" onclick="loadStatement('February 2026', 8400, [{test:'CBC',qty:18,price:350,total:6300},{test:'Lipid Panel',qty:6,price:350,total:2100}], 8400, 0)">
+                                <span>February 2026</span>
+                                <div class="row-right">
+                                    <span style="font-weight: bold;">₱8,400</span>
+                                    <span class="small-badge status-badge paid">Paid</span>
+                                    <span style="color:#aaa; font-size:12px;">›</span>
+                                </div>
+                            </div>
+                            <div class="statement-row" onclick="loadStatement('March 2026', 6400, [{test:'HbA1c',qty:5,price:550,total:2750},{test:'Fasting Glucose',qty:13,price:280,total:3640}], 6390, 10)">
+                                <span>March 2026</span>
+                                <div class="row-right">
+                                    <span style="font-weight: bold;">₱6,400</span>
+                                    <span class="small-badge status-badge paid">Paid</span>
+                                    <span style="color:#aaa; font-size:12px;">›</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-col">
+                        <div class="card">
+                            <div class="results-header">
+                                <h4 style="margin: 0;">Complete Lab Results</h4>
+                                <button class="btn" style="padding: 5px 12px; font-size: 12px; background: #81c2a6; color: white; border: none; flex:0;" onclick="downloadLabPDF()">
+                                    ↓ PRINT PDF
+                                </button>
+                            </div>
+                            <p style="font-size: 12px; color: #888; margin-top: -5px;">Download your PDF results</p>
+
+                            <div class="inner-result-card">
+                                <div style="color: #2d6a4f; font-weight: bold;">MetroMed Diagnostics</div>
+                                <div style="color: #2ecc71; font-size: 11px; margin-bottom: 10px;">Lic. No. LAB-2024-0081</div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Patient: Antoinette Curitana · F, 19y</div>
+                                <div style="font-size: 12px; color: #666; margin-bottom: 15px;">Dr. Katarina Yu · Apr 10, 2026 · #REQ-2404</div>
+
+                                <table class="data-table" style="font-size: 12px;">
+                                    <thead>
+                                        <tr><th>TEST</th><th>RESULT</th><th>REFERENCE</th><th>FLAG</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>HbA1c</td>
+                                            <td style="color: #ef4444;">7.8%</td>
+                                            <td>4.0–5.6%</td>
+                                            <td class="flag-high">↑ HIGH</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Fasting Glucose</td>
+                                            <td style="color: #ef4444;">148 mg/dL</td>
+                                            <td>70–100</td>
+                                            <td class="flag-high">↑ HIGH</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: PAYMENT HISTORY -->
+            <div id="tab-history" class="tab-panel">
+                <div class="card">
+                    <h3 style="margin-top:0; color:#2d6a4f;">Payment History</h3>
+                    <table class="history-table">
+                        <thead>
+                            <tr><th>PERIOD</th><th>DATE PAID</th><th>METHOD</th><th>AMOUNT</th><th>STATUS</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>January 2026</td><td>Feb 3, 2026</td><td>Bank Transfer</td><td>₱15,400</td>
+                                <td><span class="status-badge paid" style="font-size:12px;">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>February 2026</td><td>Mar 5, 2026</td><td>GCash</td><td>₱8,400</td>
+                                <td><span class="status-badge paid" style="font-size:12px;">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>March 2026</td><td>Apr 2, 2026</td><td>Bank Transfer</td><td>₱6,400</td>
+                                <td><span class="status-badge paid" style="font-size:12px;">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>April 2026</td><td>—</td><td>—</td><td>₱5,400</td>
+                                <td><span class="status-badge" style="font-size:12px;">Unpaid</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: LAB RESULTS -->
+            <div id="tab-results" class="tab-panel">
+                <div class="card" style="max-width: 560px;">
+                    <div class="results-header">
+                        <h3 style="margin:0; color:#2d6a4f;">Lab Results Archive</h3>
+                        <button class="btn" style="padding: 7px 14px; font-size: 12px; background: #81c2a6; color: white; border: none; flex:0;" onclick="downloadLabPDF()">
+                            ↓ PRINT PDF
+                        </button>
+                    </div>
+                    <p style="color:#888; font-size:13px; margin-top:0;">Most recent result on file</p>
+
+                    <div class="inner-result-card">
+                        <div style="color: #2d6a4f; font-weight: bold; font-size:15px;">MetroMed Diagnostics</div>
+                        <div style="color: #2ecc71; font-size: 11px; margin-bottom: 12px;">Lic. No. LAB-2024-0081</div>
+                        <div style="font-size: 13px; color: #555; margin-bottom: 3px;">Patient: <strong>Antoinette Curitana</strong> · F, 19y</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 16px;">Dr. Katarina Yu · Apr 10, 2026 · #REQ-2404</div>
+
+                        <table class="data-table" style="font-size: 13px;">
+                            <thead>
+                                <tr><th>TEST</th><th>RESULT</th><th>REFERENCE</th><th>FLAG</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>HbA1c</td>
+                                    <td style="color:#ef4444;">7.8%</td>
+                                    <td>4.0–5.6%</td>
+                                    <td class="flag-high">↑ HIGH</td>
+                                </tr>
+                                <tr>
+                                    <td>Fasting Glucose</td>
+                                    <td style="color:#ef4444;">148 mg/dL</td>
+                                    <td>70–100</td>
+                                    <td class="flag-high">↑ HIGH</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ── PAY MODAL ── -->
+    <div class="modal-overlay" id="pay-modal">
+        <div class="modal">
+            <button class="modal-close" onclick="closePayModal()">✕</button>
+            <div id="pay-form-view">
+                <h2>💳 Pay Invoice</h2>
+                <p class="modal-sub">April 2026 Statement · MetroMed Diagnostics</p>
+
+                <div class="modal-amount-box">
+                    <div class="label">Amount Due</div>
+                    <div class="amount">₱5,400.00</div>
+                </div>
+
+                <div class="payment-methods">
+                    <div class="pm-label">Select Payment Method</div>
+                    <div class="pm-options">
+                        <div class="pm-option selected" onclick="selectPM(this)">🏦 Bank Transfer</div>
+                        <div class="pm-option" onclick="selectPM(this)">📱 GCash</div>
+                        <div class="pm-option" onclick="selectPM(this)">💳 Credit Card</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>Account / Reference Name</label>
+                    <input type="text" placeholder="St. Luke's Clinic" value="St. Luke's Clinic">
+                </div>
+                <div class="form-row-two">
+                    <div class="form-row" style="margin:0">
+                        <label>Account Number</label>
+                        <input type="text" placeholder="xxxx-xxxx-xxxx">
+                    </div>
+                    <div class="form-row" style="margin:0">
+                        <label>Reference No.</label>
+                        <input type="text" placeholder="Auto-generated" readonly style="background:#f9f9f9; color:#aaa;">
+                    </div>
+                </div>
+
+                <button class="btn-confirm-pay" style="margin-top:18px;" onclick="confirmPayment()">
+                    Confirm Payment → ₱5,400
+                </button>
+            </div>
+
+            <div id="pay-success-view" class="success-state" style="display:none;">
+                <div class="success-icon">✅</div>
+                <h2>Payment Submitted!</h2>
+                <p>Your payment of <strong>₱5,400</strong> for the April 2026 statement has been submitted for processing. You will receive a confirmation shortly.</p>
+                <button class="btn-confirm-pay" onclick="closePayModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SIGN OUT MODAL ── -->
+    <div class="modal-overlay" id="signout-modal">
+        <div class="signout-modal">
+            <div style="font-size:40px; margin-bottom:10px;">👋</div>
+            <h3>Sign out of CLINIQ?</h3>
+            <p>You'll need to log in again to access St. Luke's Clinic account.</p>
+            <div class="signout-btns">
+                <button class="btn-cancel" onclick="closeSignOut()">Cancel</button>
+                <button class="btn-signout-confirm" onclick="doSignOut()">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ── TAB SWITCHING ──
+        function switchTab(name, el) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        // ── TOAST ──
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function showNavToast(page) {
+            showToast('Navigating to ' + page + '…');
+            return false;
+        }
+
+        // ── LOAD PREVIOUS STATEMENT ──
+        function loadStatement(month, total, rows, subtotal, discount) {
+            // Update header
+            document.getElementById('invoice-month').textContent = month + ' Statement';
+            const statusEl = document.getElementById('invoice-status');
+            statusEl.textContent = 'Paid';
+            statusEl.className = 'status-badge paid';
+
+            // Update table
+            const tbody = document.getElementById('invoice-tbody');
+            tbody.innerHTML = rows.map(r =>
+                `<tr><td>${r.test}</td><td>${r.qty}</td><td>₱${r.price.toLocaleString()}</td><td>₱${r.total.toLocaleString()}</td></tr>`
+            ).join('');
+
+            document.getElementById('inv-subtotal').textContent = '₱' + subtotal.toLocaleString();
+            document.getElementById('inv-discount').textContent = discount ? '-₱' + discount.toLocaleString() : '—';
+            document.getElementById('inv-total').textContent = '₱' + total.toLocaleString();
+
+            // Disable pay button for paid invoices
+            const payBtn = document.getElementById('pay-btn');
+            payBtn.textContent = '✓ Paid';
+            payBtn.disabled = true;
+            payBtn.style.background = '#4ade80';
+            payBtn.style.cursor = 'default';
+
+            switchTab('invoice', document.querySelectorAll('.tab')[0]);
+            showToast(month + ' statement loaded');
+        }
+
+        // Reset to April
+        function resetToApril() {
+            document.getElementById('invoice-month').textContent = 'April 2026 Statement';
+            const statusEl = document.getElementById('invoice-status');
+            statusEl.textContent = 'Unpaid';
+            statusEl.className = 'status-badge';
+            document.getElementById('invoice-tbody').innerHTML = `
+                <tr><td>CBC</td><td>14</td><td>₱350</td><td>₱4,900</td></tr>
+                <tr><td>HbA1c</td><td>7</td><td>₱550</td><td>₱3,850</td></tr>`;
+            document.getElementById('inv-subtotal').textContent = '₱8,750';
+            document.getElementById('inv-discount').textContent = '-₱3,350';
+            document.getElementById('inv-total').textContent = '₱5,400';
+            const payBtn = document.getElementById('pay-btn');
+            payBtn.textContent = 'Pay Now';
+            payBtn.disabled = false;
+            payBtn.style.background = '';
+            payBtn.style.cursor = '';
+        }
+
+        // ── PAY MODAL ──
+        function openPayModal() {
+            document.getElementById('pay-form-view').style.display = 'block';
+            document.getElementById('pay-success-view').style.display = 'none';
+            document.getElementById('pay-modal').classList.add('open');
+        }
+
+        function closePayModal() {
+            document.getElementById('pay-modal').classList.remove('open');
+        }
+
+        function selectPM(el) {
+            document.querySelectorAll('.pm-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function confirmPayment() {
+            document.getElementById('pay-form-view').style.display = 'none';
+            document.getElementById('pay-success-view').style.display = 'block';
+
+            // Mark as paid in UI
+            const statusEl = document.getElementById('invoice-status');
+            statusEl.textContent = 'Paid';
+            statusEl.className = 'status-badge paid';
+            const payBtn = document.getElementById('pay-btn');
+            payBtn.textContent = '✓ Paid';
+            payBtn.disabled = true;
+            payBtn.style.background = '#4ade80';
+            payBtn.style.cursor = 'default';
+        }
+
+        // ── SIGN OUT ──
+        function openSignOut() {
+            document.getElementById('signout-modal').classList.add('open');
+        }
+
+        function closeSignOut() {
+            document.getElementById('signout-modal').classList.remove('open');
+        }
+
+        function doSignOut() {
+            closeSignOut();
+            showToast('Signed out successfully. Redirecting…');
+            setTimeout(() => {
+                document.body.style.opacity = '0';
+                document.body.style.transition = 'opacity 0.4s';
+            }, 1200);
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('open');
+            });
+        });
+
+        // ── PDF: INVOICE ──
+        function downloadInvoicePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const month = document.getElementById('invoice-month').textContent;
+            const status = document.getElementById('invoice-status').textContent;
+
+            // Header block
+            doc.setFillColor(129, 194, 166);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CLINIQ', 15, 20);
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.text('St. Luke\'s Clinic · Billing Statement', 15, 30);
+
+            // Invoice info
+            doc.setTextColor(60, 60, 60);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(month, 15, 55);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text('MetroMed Diagnostics', 15, 63);
+            doc.text('Status: ' + status, 15, 71);
+            doc.text('Generated: ' + new Date().toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'}), 15, 79);
+
+            // Table header
+            doc.setFillColor(240, 249, 244);
+            doc.rect(15, 88, 180, 10, 'F');
+            doc.setTextColor(80, 80, 80);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('TEST', 18, 95);
+            doc.text('QTY', 80, 95);
+            doc.text('PRICE (EA.)', 110, 95);
+            doc.text('TOTAL', 165, 95);
+
+            // Table rows from DOM
+            const rows = document.querySelectorAll('#invoice-tbody tr');
+            let y = 107;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60, 60, 60);
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                doc.text(cells[0].textContent, 18, y);
+                doc.text(cells[1].textContent, 80, y);
+                doc.text(cells[2].textContent, 110, y);
+                doc.text(cells[3].textContent, 165, y);
+                doc.setDrawColor(220, 220, 220);
+                doc.line(15, y + 4, 195, y + 4);
+                y += 14;
+            });
+
+            // Totals
+            y += 4;
+            doc.setDrawColor(180, 180, 180);
+            doc.line(15, y, 195, y);
+            y += 8;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100,100,100);
+            doc.text('Subtotal', 120, y);
+            doc.text(document.getElementById('inv-subtotal').textContent, 165, y);
+            y += 8;
+            doc.text('Bulk Discount', 120, y);
+            doc.text(document.getElementById('inv-discount').textContent, 165, y);
+            y += 10;
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(45, 106, 79);
+            doc.setFontSize(13);
+            doc.text('Total Due', 120, y);
+            doc.text(document.getElementById('inv-total').textContent, 165, y);
+
+            // Footer
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(150, 150, 150);
+            doc.text('This is a computer-generated document. No signature required.', 15, 280);
+            doc.text('CLINIQ Billing System · cliniq.ph', 15, 286);
+
+            doc.save('CLINIQ_Invoice_' + month.replace(/ /g, '_') + '.pdf');
+            showToast('Invoice PDF downloaded!');
+        }
+
+        // ── PDF: LAB RESULTS ──
+        function downloadLabPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFillColor(129, 194, 166);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(20);
+            doc.setFont('helvetica','bold');
+            doc.text('MetroMed Diagnostics', 15, 18);
+            doc.setFontSize(10);
+            doc.setFont('helvetica','normal');
+            doc.text('Lic. No. LAB-2024-0081', 15, 28);
+            doc.text('Laboratory Results Report', 15, 36);
+
+            // Patient info
+            doc.setTextColor(60,60,60);
+            doc.setFontSize(11);
+            doc.setFont('helvetica','bold');
+            doc.text('Patient Information', 15, 52);
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(10);
+            doc.setTextColor(80,80,80);
+            doc.text('Name: Antoinette Curitana', 15, 60);
+            doc.text('Sex / Age: Female, 19 years old', 15, 68);
+            doc.text('Requesting Physician: Dr. Katarina Yu', 15, 76);
+            doc.text('Date: April 10, 2026', 15, 84);
+            doc.text('Request No.: #REQ-2404', 15, 92);
+
+            // Divider
+            doc.setDrawColor(129, 194, 166);
+            doc.setLineWidth(1);
+            doc.line(15, 98, 195, 98);
+
+            // Results header
+            doc.setFillColor(240, 249, 244);
+            doc.rect(15, 103, 180, 10, 'F');
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(10);
+            doc.setTextColor(80,80,80);
+            doc.text('TEST', 18, 110);
+            doc.text('RESULT', 70, 110);
+            doc.text('REFERENCE RANGE', 110, 110);
+            doc.text('FLAG', 175, 110);
+
+            // Results
+            const results = [
+                { test: 'HbA1c', result: '7.8%', ref: '4.0 – 5.6%', flag: 'HIGH ↑', high: true },
+                { test: 'Fasting Glucose', result: '148 mg/dL', ref: '70 – 100 mg/dL', flag: 'HIGH ↑', high: true },
+            ];
+
+            let y = 122;
+            results.forEach(r => {
+                doc.setFont('helvetica','normal');
+                doc.setTextColor(60,60,60);
+                doc.text(r.test, 18, y);
+                if (r.high) doc.setTextColor(220, 50, 50);
+                doc.text(r.result, 70, y);
+                doc.setTextColor(100,100,100);
+                doc.text(r.ref, 110, y);
+                if (r.high) { doc.setTextColor(220,50,50); doc.setFont('helvetica','bold'); }
+                doc.text(r.flag, 175, y);
+                doc.setDrawColor(220,220,220);
+                doc.line(15, y+4, 195, y+4);
+                y += 14;
+            });
+
+            // Interpretation note
+            y += 4;
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(10);
+            doc.setTextColor(220,50,50);
+            doc.text('⚠  Abnormal results detected. Please consult your physician.', 15, y);
+
+            // Footer
+            doc.setFontSize(9);
+            doc.setFont('helvetica','italic');
+            doc.setTextColor(150,150,150);
+            doc.text('This is a computer-generated document.', 15, 275);
+            doc.text('MetroMed Diagnostics · Results valid for 90 days from collection date.', 15, 281);
+
+            doc.save('MetroMed_LabResults_Curitana_Apr2026.pdf');
+            showToast('Lab results PDF downloaded!');
+        }
+    </script>
+</body>
+</html>
